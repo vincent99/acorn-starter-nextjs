@@ -17,8 +17,9 @@ containers: {
       }
       dirs: {
         "./public": "./public"
-        "./pages": "./pages"
+        "./src": "./src"
         "./styles": "./styles"
+        "./package.json": "./package.json"
       }
     }
   }
