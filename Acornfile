@@ -1,0 +1,18 @@
+containers: {
+  app: {
+    ports: publish: "3000/http"
+    build: context: "."
+    if args.dev { 
+      cmd: ["npm", "run", "dev"]
+      build: {
+        context: "."
+        target: "deps"
+      }
+      dirs: {
+        "./public": "./public"
+        "./pages": "./pages"
+        "./styles": "./styles"
+      }
+    }
+  }
+}
