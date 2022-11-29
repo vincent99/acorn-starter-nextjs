@@ -2,11 +2,18 @@ containers: {
   app: {
     ports: publish: "3000/http"
     build: context: "."
+    dependsOn: "db"
+    env: {
+      DB_USER: "secret://db-user-creds/username"
+      DB_PASS: "secret://db-user-creds/password"
+    }
+
+    // Setup hot-reloading if running in development mode
     if args.dev { 
       cmd: ["npm", "run", "dev"]
       build: {
         context: "."
-        target: "deps"
+        target: "builder"
       }
       dirs: {
         "./public": "./public"
@@ -15,4 +22,24 @@ containers: {
       }
     }
   }
+
+  db: {
+    image: "mysql"
+    ports: 3306
+    env: {
+      MYSQL_DATABASE: "api"
+      MYSQL_USER: "secret://db-user-creds/username"
+      MYSQL_PASSWORD: "secret://db-user-creds/password"
+      MYSQL_ROOT_PASSWORD: "secret://db-root-password/token"
+    }
+  }
+}
+
+secrets: {
+    "db-user-creds": {
+        type: "basic"
+    }
+    "db-root-password": {
+        type: "token"
+    }
 }
