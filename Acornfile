@@ -55,7 +55,7 @@ containers: {
     }
   }
 
-  if args.withPrismaStudio {
+  if args.withPrismaStudio || args.dev {
     studio: {
       image: "node:18"
       dependsOn: "migrate"
