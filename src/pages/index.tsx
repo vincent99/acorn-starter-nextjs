@@ -15,13 +15,6 @@ export default function Home() {
         <div className={styles.title}>
           Welcome to the Next Starter App!
         </div>
-
-        <div className={styles.grid}>
-          <ProductCard/>
-          <ProductCard/>
-          <ProductCard/>
-          <ProductCard/>
-        </div>
       </div>
     </div>
   )
