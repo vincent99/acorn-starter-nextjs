@@ -1,10 +1,18 @@
+
+localData: {
+  defaultDbHost: "db:3306/app?charset=utf8mb4&parseTime=True&loc=Local"
+  defaultDbUser: "secret://db-user-creds/username"
+  defaultDbPass: "secret://db-user-creds/password"
+  dbUrlEnvTemplate: "DB_URL=mysql://${DB_USER}:${DB_PASS}@${DB_HOST}"
+}
+
 args: {
   // Override the default generated DB username
-  dbUser: "secret://db-user-creds/username"
+  dbUser: localData.defaultDbUser
   // Override the default generate DB password
-  dbPass: "secret://db-user-creds/password"
+  dbPass: localData.defaultDbPass
   // Override the inferred DB host. Note, if override this a DB container will not get created.
-  dbHost: "db:3306/app?charset=utf8mb4&parseTime=True&loc=Local"
+  dbHost: localData.defaultDbHost
   // Enable Prisma Studio. It is highly recommend to leave this off in production.
   withPrismaStudio: false
 }
@@ -16,7 +24,7 @@ containers: {
     dependsOn: "migrate"
 
     dirs: "./prisma": "./prisma"
-    files: "/app/.env": "DB_URL=mysql://${DB_USER}:${DB_PASS}@${DB_HOST}"
+    files: "/app/.env": localData.dbUrlEnvTemplate
     env: {
       DB_USER: args.dbUser
       DB_PASS: args.dbPass
@@ -42,7 +50,7 @@ containers: {
   }
 
   // If we're using a non-inferred DB host, don't create a DB container.
-  if args.dbHost == "db:3306/app?charset=utf8mb4&parseTime=True&loc=Local" {
+  if args.dbHost == localData.defaultDbHost {
     db: {
       image: "mysql"
       ports: 3306
@@ -61,7 +69,7 @@ containers: {
       dependsOn: "migrate"
 
       dirs: "./prisma": "./prisma"
-      files: "./.env": "DB_URL=mysql://${DB_USER}:${DB_PASS}@${DB_HOST}"
+      files: "./.env": localData.dbUrlEnvTemplate
       env: {
         DB_USER: args.dbUser
         DB_PASS: args.dbPass
@@ -79,12 +87,12 @@ jobs: {
     image: "node:18"
 
     // If we're using a non-inferred DB host, don't depend on the DB container
-    if args.dbHost == "db:3306/app?charset=utf8mb4&parseTime=True&loc=Local" {
+    if args.dbHost == localData.defaultDbHost {
       dependsOn: "db"
     }
     
     dirs: "./prisma": "./prisma"
-    files: "./.env": "DB_URL=mysql://${DB_USER}:${DB_PASS}@${DB_HOST}"
+    files: "./.env": localData.dbUrlEnvTemplate
     env: {
       DB_USER: args.dbUser
       DB_PASS: args.dbPass
@@ -97,7 +105,7 @@ jobs: {
 
 secrets: {
   // If we have a non-default option set for both the username and password then don't generate a secret.
-  if args.dbUser == "secret://db-user-creds/username" || args.dbPass == "secret://db-user-creds/password" {
+  if args.dbUser == localData.defaultDbUser || args.dbPass == localData.defaultDbPass {
     "db-user-creds": {
         type: "basic"
     }
