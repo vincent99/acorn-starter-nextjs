@@ -1,8 +1,46 @@
-import Head from 'next/head'
 import ProductCard from '../components/ProductCard'
+import {Todo} from '@prisma/client'
+import React, {useState} from 'react'
 import styles from './index.module.css';
+import { useRouter } from 'next/router';
 
-export default function Home() {
+export async function getServerSideProps() {
+  const res = await fetch(`http://localhost:3000/api/todos`)
+  const data = await res.json()
+  return { props: { todos: data } }
+}
+
+type HomeProps = { todos: Array<Todo> }
+export default function Home(props: HomeProps) {
+  const [name, setName] = useState('')
+  const [content, setContent] = useState('')
+  const router = useRouter();
+
+  const create = async(e: React.SyntheticEvent) => {
+    try {
+      await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json'},
+        body: JSON.stringify({name, content})
+      })
+      router.push("/")
+    } catch (error) {
+      console.error(`Failed to create todo: ${error}`)
+    }
+  }
+
+  const remove = async(e: React.SyntheticEvent, id: string) => {
+    try {
+      await fetch(`/api/todos/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json'},
+      })
+      router.push("/")
+    } catch (error) {
+      console.error(`Failed to create todo: ${error}`)
+    }
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.head}>
@@ -13,7 +51,30 @@ export default function Home() {
 
       <div className={styles.main}>
         <div className={styles.title}>
-          Welcome to the Next Starter App!
+          Welcome to the Acorn TODO app!
+        </div>
+        <div className={styles.grid}>
+          <ProductCard>
+            <form onSubmit={create}>
+              <p>New Todo</p>
+              <br/>
+              <input type="text" placeholder="Name" onChange={(e) => setName(e.target.value)} />
+              <br/>
+              <textarea placeholder="Content" onChange={(e) => setContent(e.target.value)}/>
+              <br/>
+              <input disabled={!name || !content} type="submit" value="Create" />
+            </form>
+          </ProductCard>
+          {props.todos.map((todo, i) => 
+            <ProductCard key={i}>
+              <div className={styles.todo}>
+                <p>{todo.name}</p>
+                <p>{todo.content}</p>
+                <p>{String(todo.complete)}</p>
+                <button onClick={(e) => remove(e, todo.id) }>Remove</button>
+              </div>
+            </ProductCard>
+          )}
         </div>
       </div>
     </div>

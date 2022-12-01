@@ -8,15 +8,14 @@ export default async function handler(
 ) {
   switch(req.method) {
     case 'GET':
-      res.status(200).json(await db.todo.findMany())
+      res.status(200).json(await db.todo.findMany({orderBy: {updatedAt: 'desc'}}))
       break;
     case 'POST':
-      const {name, content, complete} = req.body
+      const {name, content} = req.body
       res.status(200).json(await db.todo.create({
         data: {
           name,
           content,
-          complete
         }
       }))
       break;
