@@ -1,29 +1,23 @@
 import ProductCard from '../components/ProductCard'
 import {Todo} from '@prisma/client'
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import styles from './index.module.css';
-import { useRouter } from 'next/router';
-
-export async function getServerSideProps() {
-  const res = await fetch(`http://localhost:3000/api/todos`)
-  const data = await res.json()
-  return { props: { todos: data } }
-}
 
 type HomeProps = { todos: Array<Todo> }
 export default function Home(props: HomeProps) {
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
-  const router = useRouter();
+  const [todos, setTodos] = useState(new Array<Todo>)
 
   const create = async(e: React.SyntheticEvent) => {
     try {
+      e.preventDefault()
       await fetch('/api/todos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json'},
         body: JSON.stringify({name, content})
       })
-      router.push("/")
+      get()
     } catch (error) {
       console.error(`Failed to create todo: ${error}`)
     }
@@ -35,11 +29,35 @@ export default function Home(props: HomeProps) {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json'},
       })
-      router.push("/")
+      get()
     } catch (error) {
-      console.error(`Failed to create todo: ${error}`)
+      console.error(`Failed to delete todo: ${error}`)
     }
   }
+
+  const update = async(e: React.SyntheticEvent, id: string, todo: Todo) => {
+    try {
+      await fetch(`/api/todos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json'},
+        body: JSON.stringify(todo)
+      })
+      get()
+    } catch (error) {
+      console.error(`Failed to update todo: ${error}`)
+    }
+  }
+
+  const get = async() => {
+    try {
+      const res = await fetch(`/api/todos`)
+      setTodos(await res.json() as Todo[])
+    } catch (error) {
+      console.error(`Failed to get todos: ${error}`)
+    }
+  }
+
+  useEffect(() => { get() }, [])
 
   return (
     <div className={styles.container}>
@@ -50,28 +68,60 @@ export default function Home(props: HomeProps) {
       </div>
 
       <div className={styles.main}>
-        <div className={styles.title}>
-          Welcome to the Acorn TODO app!
+        <div className={styles.header}>
+          <div className={styles.title}>Your Acorn application is now running!</div>
+          <hr/>
         </div>
         <div className={styles.grid}>
           <ProductCard>
             <form onSubmit={create}>
-              <p>New Todo</p>
+              <p 
+                contentEditable="true" 
+                onBlur={(e) => setName(String(e.currentTarget.textContent))}
+                suppressContentEditableWarning={true}
+              >
+                  New Todo
+              </p>
+              <textarea className={styles.content} placeholder="Content" onChange={(e) => setContent(e.target.value)}/>
               <br/>
-              <input type="text" placeholder="Name" onChange={(e) => setName(e.target.value)} />
-              <br/>
-              <textarea placeholder="Content" onChange={(e) => setContent(e.target.value)}/>
-              <br/>
-              <input disabled={!name || !content} type="submit" value="Create" />
+              <input className={styles.submit} disabled={!name || !content} type="submit" value="Create" />
             </form>
           </ProductCard>
-          {props.todos.map((todo, i) => 
+          {todos.map((todo, i) => 
             <ProductCard key={i}>
               <div className={styles.todo}>
-                <p>{todo.name}</p>
-                <p>{todo.content}</p>
-                <p>{String(todo.complete)}</p>
-                <button onClick={(e) => remove(e, todo.id) }>Remove</button>
+                <p
+                  contentEditable={!todo.complete}
+                  suppressContentEditableWarning={true}
+                  onBlur={(e) => {
+                    todo.name = String(e.currentTarget.textContent)
+                    update(e, todo.id, todo)
+                  }}
+                  className={todo.complete ? styles.strike : ""}
+                >
+                  {todo.name}
+                </p>
+                
+                <textarea 
+                  disabled={todo.complete}
+                  className={`${styles.content} ${todo.complete ? styles.strike : ""}`}
+                  defaultValue={String(todo.content)} 
+                  onBlur={(e) => {
+                    todo.content = e.target.value
+                    update(e, todo.id, todo)
+                  }}
+                />
+
+                <div className={styles.options}>
+                  <button className={styles.complete} onClick={(e) => {
+                    todo.complete = !todo.complete
+                    update(e, todo.id, todo)
+                  }}>
+                    {todo.complete ? '✅' : '⬜'}
+                  </button>
+                  <button className={styles.remove} onClick={(e) => remove(e, todo.id) }>🗑️</button>
+                </div>
+
               </div>
             </ProductCard>
           )}
