@@ -37,6 +37,14 @@ containers: {
       cmd: ["npm", "run", "dev"]
     }
     ports: publish: "3000/http"
+    probes: [
+      {
+        type: "readiness"
+        http: {
+          url: "http://localhost:3000/api/todos"
+        }
+      }
+    ]
   }
 
   // If we're using a non-inferred DB host, don't create a DB container.
