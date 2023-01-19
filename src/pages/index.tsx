@@ -69,9 +69,10 @@ export default function Home(props: HomeProps) {
     }
   }
 
-  useEffect(() => { 
-    console.log('useEffect happened')
-    window.postMessage('updated')
+  useEffect(() => {
+    if ( window.top ) {
+      window.top.postMessage('updated','*')
+    }
     setWelcome(message)
     get()
   }, [])
