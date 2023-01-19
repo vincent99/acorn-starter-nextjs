@@ -74,22 +74,24 @@ containers: {
 
 jobs: {
   migrate: {
-    image: "node:18"
+    build: {
+      context: "."
+      target: "builder"
+    }
+
+    cmd: ["prisma/migrate.sh"]
 
     // If we're using a non-inferred DB host, don't depend on the DB container
     if args.dbHost == localData.defaultDbHost {
       dependsOn: "db"
     }
-    
-    dirs: "./prisma": "./prisma"
+
     files: "./.env": localData.dbUrlEnvTemplate
     env: {
       DB_USER: args.dbUser
       DB_PASS: args.dbPass
       DB_HOST: args.dbHost
     }
-
-    cmd: ["npx", "prisma", "db", "push"]
   }
 }
 
